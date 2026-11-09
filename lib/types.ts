@@ -28,7 +28,7 @@ export interface Settings {
   shadowsSeeHunters: "never" | "reveal" | "always";
   shadowsSeeEachOther: boolean;
   maxPlayers: number;
-  lateJoinRole: "hunter" | "spectator";
+  lateJoinRole: "hunter" | "shadow";
   preset?: string;
 }
 

@@ -578,7 +578,11 @@ function TagSheet({
   const request = async (p: Player) => {
     setBusy(p.id);
     try {
-      await rpc("request_tag", { p_game: g.id, p_other: p.id });
+      const id = await rpc<string | null>("request_tag", { p_game: g.id, p_other: p.id });
+      if (!id) {
+        toast.error("Too far away to tag — get closer.");
+        return;
+      }
       if (!g.settings.tagConfirm) onClose();
     } catch (e) {
       toast.error((e as Error).message);

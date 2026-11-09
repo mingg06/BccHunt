@@ -47,6 +47,8 @@ const FRIENDLY: Record<string, string> = {
   tag_expired: "That tag request expired.",
   tag_closed: "That tag was already resolved.",
   not_member: "You're not in this room.",
+  tag_cooldown: "Wait a few seconds before trying to tag again.",
+  host_only_spectator: "Only the host can be a Spectator — spectators see everyone's location.",
   bad_zone: "The play zone is invalid — set it on the map again.",
   anonymous_provider_disabled: "Guest sign-in is disabled in Supabase (enable Anonymous sign-ins).",
 };

@@ -285,8 +285,8 @@ export function Lobby({ st }: { st: GameState }) {
       <Sheet open={!!editPlayer} onClose={() => setEditPlayer(null)} title={editPlayer ? `${editPlayer.emoji} ${editPlayer.nickname}` : ""}>
         {editPlayer && (
           <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-2">
-              {(["hunter", "shadow", "spectator"] as Role[]).map((r) => (
+            <div className="grid auto-cols-fr grid-flow-col gap-2">
+              {(["hunter", "shadow", "spectator"] as Role[]).filter((r) => r !== "spectator" || editPlayer.user_id === game.host_id).map((r) => (
                 <button
                   key={r}
                   onClick={async () => {

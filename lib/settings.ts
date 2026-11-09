@@ -72,7 +72,10 @@ export const PRESETS: Preset[] = [
 ];
 
 export function withDefaults(s: Partial<Settings> | null | undefined): Settings {
-  return { ...DEFAULT_SETTINGS, ...(s ?? {}) };
+  const out = { ...DEFAULT_SETTINGS, ...(s ?? {}) };
+  // spectators see everyone's live location, so only the host may be one
+  if (out.lateJoinRole !== "shadow") out.lateJoinRole = "hunter";
+  return out;
 }
 
 export function applyPreset(id: string): Settings {

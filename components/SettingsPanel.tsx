@@ -158,7 +158,7 @@ export function SettingsPanel({
             disabled={d}
             options={[
               { value: "hunter", label: "Hunters" },
-              { value: "spectator", label: "Spectators" },
+              { value: "shadow", label: "Shadows" },
             ]}
           />
         </Row>

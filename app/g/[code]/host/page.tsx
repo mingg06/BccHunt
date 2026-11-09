@@ -140,8 +140,8 @@ function Dashboard({ st }: { st: ReturnType<typeof useGame> }) {
             <div className="flex items-center gap-2">
               <RoleBadge role={sel.role} /> <span className="text-sm text-muted">{sel.status}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {(["hunter", "shadow", "spectator"] as Role[]).map((r) => (
+            <div className="grid auto-cols-fr grid-flow-col gap-2">
+              {(["hunter", "shadow", "spectator"] as Role[]).filter((r) => r !== "spectator" || sel.user_id === g.host_id).map((r) => (
                 <button
                   key={r}
                   onClick={() => rpc("set_role", { p_game: g.id, p_player: sel.id, p_role: r }).then(() => setSel(null)).catch((e) => toast.error(e.message))}
