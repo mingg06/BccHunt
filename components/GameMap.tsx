@@ -170,10 +170,12 @@ export default function GameMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // style switch
+  // style switch (skip the initial render: the map was created with this style)
+  const appliedStyle = useRef(styleKey);
   useEffect(() => {
     const m = map.current;
-    if (!m) return;
+    if (!m || appliedStyle.current === styleKey) return;
+    appliedStyle.current = styleKey;
     try {
       localStorage.setItem("bcchunt-map", styleKey);
     } catch {}
@@ -258,7 +260,8 @@ export default function GameMap({
 
   return (
     <div className={cn("relative overflow-hidden", className)}>
-      <div ref={el} className="absolute inset-0" />
+      {/* inline style: maplibre's unlayered CSS (position:relative) beats Tailwind's layered utilities */}
+      <div ref={el} style={{ position: "absolute", inset: 0 }} />
       <div className="pointer-events-none absolute bottom-24 right-3 z-[2] flex flex-col gap-2">
         <button
           onClick={() => setStyleKey((s) => (s === "dark" ? "streets" : "dark"))}
