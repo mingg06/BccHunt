@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 
-const display = Space_Grotesk({ variable: "--font-display", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
-const mono = JetBrains_Mono({ variable: "--font-mono-face", subsets: ["latin"], weight: ["500", "700"] });
+// Self-hosted (latin, variable weight, OFL) so builds never depend on Google Fonts.
+const display = localFont({ src: "./fonts/space-grotesk.woff2", variable: "--font-display", weight: "400 700", display: "swap" });
+const mono = localFont({ src: "./fonts/jetbrains-mono.woff2", variable: "--font-mono-face", weight: "500 700", display: "swap" });
 
 export const metadata: Metadata = {
   title: "BCCHunt — Hunters vs Shadows",
