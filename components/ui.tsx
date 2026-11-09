@@ -2,7 +2,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Loader2 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useDragControls } from "motion/react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import type { Player, Role } from "@/lib/types";
 
@@ -196,6 +196,7 @@ export function Sheet({
   children: ReactNode;
   title?: ReactNode;
 }) {
+  const drag = useDragControls();
   return (
     <AnimatePresence>
       {open && (
@@ -214,11 +215,13 @@ export function Sheet({
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 420, damping: 40 }}
             drag="y"
+            dragControls={drag}
+            dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.6 }}
             onDragEnd={(_, i) => (i.offset.y > 120 || i.velocity.y > 600) && onClose()}
           >
-            <div className="sticky top-0 z-10 bg-surface px-5 pb-2 pt-3">
+            <div className="sticky top-0 z-10 cursor-grab touch-none bg-surface px-5 pb-2 pt-3" onPointerDown={(e) => drag.start(e)}>
               <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-white/15" />
               {title && <div className="text-lg font-semibold">{title}</div>}
             </div>

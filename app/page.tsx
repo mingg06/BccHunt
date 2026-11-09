@@ -4,23 +4,18 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowRight, Plus, Radar, Timer, Shrink, Hand } from "lucide-react";
 import { toast } from "sonner";
-import { Button, Card, Sheet, cn, ROLE_META } from "@/components/ui";
+import { Button, Card } from "@/components/ui";
 import { ProfileFields } from "@/components/ProfileFields";
 import { Logo } from "@/components/Logo";
 import { useProfile } from "@/lib/profile";
 import { ensureSession, rpc } from "@/lib/supabase";
-import { PRESETS, applyPreset } from "@/lib/settings";
 import { unlockAudio } from "@/lib/fx";
-import type { Role } from "@/lib/types";
 
 export default function Home() {
   const router = useRouter();
   const { profile, update } = useProfile();
   const [code, setCode] = useState("");
-  const [busy, setBusy] = useState<"join" | "create" | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [preset, setPreset] = useState("classic");
-  const [role, setRole] = useState<Role>("hunter");
+  const [busy, setBusy] = useState<"join" | null>(null);
 
   const nickOk = profile.nickname.trim().length > 0;
 
@@ -32,25 +27,6 @@ export default function Home() {
       await ensureSession();
       await rpc("join_game", { p_code: code, p_nickname: profile.nickname.trim(), p_emoji: profile.emoji });
       router.push(`/g/${code.toUpperCase()}`);
-    } catch (e) {
-      toast.error((e as Error).message);
-      setBusy(null);
-    }
-  };
-
-  const create = async () => {
-    if (!nickOk) return toast.error("Pick a nickname first");
-    unlockAudio();
-    setBusy("create");
-    try {
-      await ensureSession();
-      const c = await rpc<string>("create_game", {
-        p_nickname: profile.nickname.trim(),
-        p_emoji: profile.emoji,
-        p_settings: applyPreset(preset),
-        p_role: role,
-      });
-      router.push(`/g/${c}`);
     } catch (e) {
       toast.error((e as Error).message);
       setBusy(null);
@@ -115,7 +91,7 @@ export default function Home() {
           <div className="flex items-center gap-3 text-[12px] uppercase tracking-widest text-faint">
             <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
           </div>
-          <Button variant="outline" size="lg" className="w-full" onClick={() => setCreateOpen(true)}>
+          <Button variant="outline" size="lg" className="w-full" onClick={() => router.push("/create")}>
             <Plus className="size-5" /> Create a room
           </Button>
         </Card>
@@ -125,52 +101,6 @@ export default function Home() {
         </p>
       </div>
 
-      <Sheet open={createOpen} onClose={() => setCreateOpen(false)} title="New room">
-        <div className="space-y-5">
-          <div>
-            <div className="mb-2 text-[13px] font-medium text-muted">Game mode</div>
-            <div className="grid grid-cols-2 gap-2">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => setPreset(p.id)}
-                  className={cn(
-                    "rounded-2xl border p-3 text-left transition",
-                    preset === p.id ? "border-shadow bg-shadow/10" : "border-line bg-surface-2 hover:border-line-strong",
-                  )}
-                >
-                  <div className="text-xl">{p.emoji}</div>
-                  <div className="mt-1 font-semibold">{p.name}</div>
-                  <div className="mt-0.5 text-[12px] leading-snug text-muted">{p.blurb}</div>
-                </button>
-              ))}
-            </div>
-            <p className="mt-2 text-[12px] text-faint">Every setting can be fine-tuned in the lobby.</p>
-          </div>
-          <div>
-            <div className="mb-2 text-[13px] font-medium text-muted">You will</div>
-            <div className="grid grid-cols-3 gap-2">
-              {(["hunter", "shadow", "spectator"] as Role[]).map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className={cn(
-                    "rounded-2xl border px-2 py-3 text-center text-sm font-semibold transition",
-                    role === r ? "bg-white/5" : "border-line bg-surface-2 text-muted",
-                  )}
-                  style={role === r ? { borderColor: ROLE_META[r].color, color: ROLE_META[r].color } : undefined}
-                >
-                  <div className="text-xl">{ROLE_META[r].icon}</div>
-                  {r === "spectator" ? "Just host" : ROLE_META[r].label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <Button size="lg" className="w-full" loading={busy === "create"} onClick={create}>
-            Create room
-          </Button>
-        </div>
-      </Sheet>
     </main>
   );
 }

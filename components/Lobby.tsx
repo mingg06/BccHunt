@@ -1,21 +1,18 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { Copy, Crosshair, LogOut, MapPin, QrCode, Share2, Shuffle, SlidersHorizontal, Play as PlayIcon, Minus, Plus } from "lucide-react";
-import { Avatar, Button, Card, RoleBadge, ROLE_META, Sheet, Slider, cn } from "./ui";
+import { Copy, LogOut, QrCode, Share2, Shuffle, SlidersHorizontal, Play as PlayIcon, Minus, Plus } from "lucide-react";
+import { Avatar, Button, Card, RoleBadge, ROLE_META, Sheet, cn } from "./ui";
+import { ZoneEditor } from "./ZoneEditor";
 import { SettingsPanel, settingsSummary } from "./SettingsPanel";
 import { rpc } from "@/lib/supabase";
-import { distance, formatDistance } from "@/lib/geo";
 import { PRESETS, applyPreset } from "@/lib/settings";
 import { useGeolocation } from "@/hooks/device";
 import { usePublisher } from "@/hooks/usePublisher";
 import type { GameState } from "@/hooks/useGame";
 import type { Player, Role, Settings, Zone } from "@/lib/types";
-
-const GameMap = dynamic(() => import("./GameMap"), { ssr: false });
 
 export function Lobby({ st }: { st: GameState }) {
   const game = st.game!;
@@ -26,7 +23,6 @@ export function Lobby({ st }: { st: GameState }) {
   const [showQR, setShowQR] = useState(false);
   const [editPlayer, setEditPlayer] = useState<Player | null>(null);
   const [starting, setStarting] = useState(false);
-  const [placing, setPlacing] = useState(false);
   const dirty = useRef(false);
   const geo = useGeolocation(true);
   usePublisher(game.id, geo.fix, true, 5000);
@@ -114,8 +110,6 @@ export function Lobby({ st }: { st: GameState }) {
     }
   };
 
-  const myGpsDist = geo.fix && zone ? formatDistance(Math.max(0, distance(zone, geo.fix) - zone.r)) : null;
-
   return (
     <main className="mx-auto min-h-dvh max-w-lg pb-36">
       {/* header */}
@@ -143,73 +137,29 @@ export function Lobby({ st }: { st: GameState }) {
 
       <div className="space-y-4 px-5 pt-4">
         {/* zone */}
-        <Card className="overflow-hidden p-0">
-          <div className="relative h-72">
-            <GameMap
-              className="absolute inset-0"
-              zone={settings.zoneEnabled ? zone : null}
-              initialCenter={zone ?? geo.fix}
-              me={geo.fix}
-              fitKey={zone ? `${zone.r}` : undefined}
-              onMapClick={host && placing ? (p) => (setZ({ ...p, r: zone?.r ?? 500 }), setPlacing(false)) : undefined}
-              markers={[
-                ...(geo.fix && st.me
-                  ? [{ id: "me", lat: geo.fix.lat, lng: geo.fix.lng, color: st.me.color, emoji: st.me.emoji, kind: "me" as const }]
-                  : []),
-                ...[...st.positions.values()]
-                  .filter((p) => p.player_id !== st.me?.id)
-                  .map((p) => {
-                    const pl = st.players.find((x) => x.id === p.player_id);
-                    return pl
-                      ? { id: p.player_id, lat: p.lat, lng: p.lng, color: pl.color, emoji: pl.emoji, label: pl.nickname, kind: "ally" as const }
-                      : null;
-                  })
-                  .filter((x): x is NonNullable<typeof x> => !!x),
-              ]}
-            />
-            {placing && (
-              <div className="glass absolute inset-x-3 top-3 z-10 rounded-2xl px-3 py-2 text-center text-sm">
-                Tap the map to set the zone centre
-              </div>
-            )}
-          </div>
-          <div className="space-y-3 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[15px] font-semibold">
-                <MapPin className="size-4 text-zone" /> Play zone
-              </div>
-              {!settings.zoneEnabled ? (
-                <span className="text-sm text-muted">Disabled</span>
-              ) : zone ? (
-                <span className="font-mono text-sm tabular">{formatDistance(zone.r * 2)} wide</span>
-              ) : (
-                <span className="text-sm text-danger">Not set</span>
-              )}
-            </div>
-            {host && settings.zoneEnabled && (
-              <>
-                {zone && (
-                  <Slider value={zone.r} min={50} max={3000} step={25} onChange={(r) => setZ({ ...zone, r })} accent="var(--color-zone)" />
-                )}
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => setPlacing((v) => !v)}>
-                    <Crosshair className="size-4" /> {placing ? "Cancel" : "Pick on map"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex-1"
-                    disabled={!geo.fix}
-                    onClick={() => geo.fix && setZ({ lat: geo.fix.lat, lng: geo.fix.lng, r: zone?.r ?? 500 })}
-                  >
-                    <MapPin className="size-4" /> Centre on me
-                  </Button>
-                </div>
-              </>
-            )}
-            <GpsLine status={geo.status} acc={geo.fix?.acc} outside={myGpsDist && myGpsDist !== "0 m" ? myGpsDist : null} />
-          </div>
-        </Card>
+        <ZoneEditor
+          zone={zone}
+          setZone={setZ}
+          enabled={settings.zoneEnabled}
+          setEnabled={(v) => patch({ zoneEnabled: v })}
+          editable={host}
+          fix={geo.fix}
+          geoStatus={geo.status}
+          markers={[
+            ...(geo.fix && st.me
+              ? [{ id: "me", lat: geo.fix.lat, lng: geo.fix.lng, color: st.me.color, emoji: st.me.emoji, kind: "me" as const }]
+              : []),
+            ...[...st.positions.values()]
+              .filter((p) => p.player_id !== st.me?.id)
+              .map((p) => {
+                const pl = st.players.find((x) => x.id === p.player_id);
+                return pl
+                  ? { id: p.player_id, lat: p.lat, lng: p.lng, color: pl.color, emoji: pl.emoji, label: pl.nickname, kind: "ally" as const }
+                  : null;
+              })
+              .filter((x): x is NonNullable<typeof x> => !!x),
+          ]}
+        />
 
         {/* teams */}
         <div className="grid grid-cols-2 gap-3">
@@ -367,24 +317,6 @@ export function Lobby({ st }: { st: GameState }) {
         )}
       </Sheet>
     </main>
-  );
-}
-
-function GpsLine({ status, acc, outside }: { status: string; acc?: number; outside: string | null }) {
-  const ok = status === "watching";
-  return (
-    <div className="flex items-center gap-2 text-[13px]">
-      <span className={cn("size-2 rounded-full", ok ? (acc && acc > 30 ? "bg-hunter" : "bg-ok") : status === "denied" ? "bg-danger" : "bg-faint")} />
-      <span className="text-muted">
-        {status === "denied"
-          ? "Location blocked — enable it in your browser settings"
-          : status === "unavailable"
-            ? "This device has no GPS"
-            : ok
-              ? `GPS ready · ±${Math.round(acc ?? 0)} m${outside ? ` · you're ${outside} outside the zone` : ""}`
-              : "Waiting for GPS…"}
-      </span>
-    </div>
   );
 }
 
