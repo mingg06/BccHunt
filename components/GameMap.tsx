@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Map as MlMap, Marker, LngLatBounds, type GeoJSONSource, type MapMouseEvent } from "maplibre-gl";
+import { Map as MlMap, Marker, LngLatBounds, setWorkerUrl, type GeoJSONSource, type MapMouseEvent } from "maplibre-gl";
+
+// served from /public (copied by scripts/copy-map-worker.mjs); the bundler doesn't emit it
+setWorkerUrl("/maplibre-gl-worker.mjs");
 import { Layers, LocateFixed } from "lucide-react";
 import { circleRing } from "@/lib/geo";
 import type { Zone } from "@/lib/types";
